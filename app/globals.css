@@ -1,27 +1,83 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* App.css */
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* General Styles */
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #f5f5f5;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+.App {
+  text-align: center;
+  margin: 20px;
+}
+
+/* Story Input */
+.story-input {
+  width: 100%;
+  max-width: 600px;
+  height: 150px;
+  padding: 10px;
+  margin: 20px 0;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+
+/* Scene List */
+.scene-list {
+  width: 100%;
+  max-width: 800px;
+  padding: 20px;
+  margin: 20px auto;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.scene {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding: 15px;
+  border-bottom: 1px solid #ddd;
+}
+
+.scene:last-child {
+  border-bottom: none;
+}
+
+.scene img {
+  max-width: 300px;
+  border-radius: 8px;
+  border: 5px solid #ff4444;
+}
+
+/* Button Styles */
+button {
+  cursor: pointer;
+  border: none;
+  color: white;
+  font-weight: bold;
+  transition: background-color 0.3s;
+  margin: 10px;
+}
+
+button:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
+}
+
+/* Footer Links */
+footer a {
+  text-decoration: none;
+  color: #0070f3;
+  font-weight: 500;
+  transition: color 0.2s;
+  margin: 10px;
+}
+
+footer a:hover {
+  color: #005bb5;
 }
