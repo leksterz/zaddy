@@ -1,22 +1,27 @@
-// app/page.tsx
-
 'use client';
 
 import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BookOpen, Home, FolderOpen, Trash2, Library, Users, Mic2 } from 'lucide-react';
 
 export default function Page() {
   const [script, setScript] = useState('');
   const [loading, setLoading] = useState(false);
   const [storyboard, setStoryboard] = useState(null);
+  const [regeneratingImage, setRegeneratingImage] = useState({}); // Track which image is regenerating
 
   const generateStoryboard = async () => {
     if (!script.trim()) {
       alert('Please enter a script.');
       return;
     }
-  
+
     setLoading(true);
-  
+
     try {
       const response = await fetch('/api/generate-storyboard', {
         method: 'POST',
@@ -25,12 +30,12 @@ export default function Page() {
         },
         body: JSON.stringify({ script }),
       });
-  
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to generate storyboard');
       }
-  
+
       const data = await response.json();
       setStoryboard(data.storyboard);
     } catch (error) {
@@ -39,61 +44,163 @@ export default function Page() {
     } finally {
       setLoading(false);
     }
-  };  
+  };
+
+  const regenerateImage = async (scene, index) => {
+    setRegeneratingImage({ ...regeneratingImage, [index]: true });
+
+    try {
+      const response = await fetch('/api/generate-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sceneDescription: scene.description,
+          sceneVisuals: scene.visuals,
+          sceneIndex: index,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to regenerate image');
+      }
+
+      const data = await response.json();
+      setStoryboard(prevStoryboard => {
+        const updatedStoryboard = [...prevStoryboard];
+        updatedStoryboard[index].image = data.image;
+        return updatedStoryboard;
+      });
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
+    } finally {
+      setRegeneratingImage({ ...regeneratingImage, [index]: false });
+    }
+  };
 
   return (
-    <main style={{ padding: '16px', fontFamily: 'Arial, sans-serif' }}>
-      <h1>AI Storyboard Generator</h1>
-      <textarea
-        value={script}
-        onChange={(e) => setScript(e.target.value)}
-        placeholder="Enter your story or script here..."
-        rows={10}
-        cols={80}
-        style={{ width: '100%', marginBottom: '16px', padding: '8px', fontSize: '16px' }}
-      />
-      <br />
-      <button
-        onClick={generateStoryboard}
-        disabled={loading}
-        style={{
-          padding: '10px 20px',
-          fontSize: '16px',
-          cursor: 'pointer',
-        }}
-      >
-        {loading ? 'Generating Storyboard...' : 'Generate Storyboard'}
-      </button>
-      {loading && <p>Processing your script. This may take a few moments...</p>}
-      {storyboard && (
-        <div style={{ marginTop: '32px' }}>
-          <h2>Generated Storyboard</h2>
-          {storyboard.map((scene, index) => (
-            <div
-              key={index}
-              style={{
-                border: '1px solid #ccc',
-                padding: '16px',
-                marginBottom: '16px',
-                borderRadius: '8px',
-                backgroundColor: '#f9f9f9',
-              }}
-            >
-              <h3>Scene {index + 1}</h3>
-              <p><strong>Description:</strong> {scene.description}</p>
-              <p><strong>Visual Suggestions:</strong> {scene.visuals}</p>
-              <p><strong>Timestamp:</strong> {scene.timestamp}</p>
-              {scene.image && (
-                <img
-                  src={scene.image}
-                  alt={`Scene ${index + 1}`}
-                  style={{ maxWidth: '100%', height: 'auto', marginTop: '16px' }}
-                />
-              )}
-            </div>
-          ))}
+    <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+      {/* Sidebar */}
+      <div className="w-64 bg-white dark:bg-gray-800 p-4 space-y-4">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-300 mb-4">Storyboard AI</h2>
+        <nav className="space-y-2">
+          <Button variant="ghost" className="w-full justify-start text-gray-900 dark:text-gray-300">
+            <Home className="mr-2 h-4 w-4" />
+            Home
+          </Button>
+          <Button variant="ghost" className="w-full justify-start text-gray-900 dark:text-gray-300">
+            <FolderOpen className="mr-2 h-4 w-4" />
+            Workspace
+          </Button>
+          <Button variant="ghost" className="w-full justify-start text-gray-900 dark:text-gray-300">
+            <BookOpen className="mr-2 h-4 w-4" />
+            My Stories
+          </Button>
+          <Button variant="ghost" className="w-full justify-start text-gray-900 dark:text-gray-300">
+            <Trash2 className="mr-2 h-4 w-4" />
+            Trash
+          </Button>
+        </nav>
+        <div className="pt-4">
+          <h3 className="font-semibold text-gray-900 dark:text-gray-300 mb-2">Assets</h3>
+          <nav className="space-y-2">
+            <Button variant="ghost" className="w-full justify-start text-gray-900 dark:text-gray-300">
+              <Library className="mr-2 h-4 w-4" />
+              Library
+            </Button>
+            <Button variant="ghost" className="w-full justify-start text-gray-900 dark:text-gray-300">
+              <Users className="mr-2 h-4 w-4" />
+              Characters
+            </Button>
+            <Button variant="ghost" className="w-full justify-start text-gray-900 dark:text-gray-300">
+              <Mic2 className="mr-2 h-4 w-4" />
+              Voices
+            </Button>
+          </nav>
         </div>
-      )}
-    </main>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 p-8">
+        <div className="mb-4 flex justify-between items-center">
+          <Input
+            type="search"
+            placeholder="Search stories"
+            className="w-64"
+            value={script}
+            onChange={(e) => setScript(e.target.value)}
+          />
+          <Button onClick={generateStoryboard} disabled={loading}>
+            {loading ? 'Generating...' : 'New Story'}
+          </Button>
+        </div>
+
+        <Card className="w-full">
+          <CardContent className="p-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-300 mb-4">AI Storyboard Assistant</h2>
+            <Tabs defaultValue="story" className="w-full">
+              <TabsList>
+                <TabsTrigger value="story" className="text-gray-900 dark:text-gray-300">Story</TabsTrigger>
+                <TabsTrigger value="settings" className="text-gray-900 dark:text-gray-300">Settings</TabsTrigger>
+              </TabsList>
+              <TabsContent value="story">
+                <Textarea
+                  placeholder="Enter your story here..."
+                  className="w-full h-32 mb-4"
+                  value={script}
+                  onChange={(e) => setScript(e.target.value)}
+                />
+                <Button
+                  onClick={generateStoryboard}
+                  className="w-full mb-4"
+                  disabled={loading}
+                >
+                  {loading ? 'Generating Storyboard...' : 'Generate Storyboard'}
+                </Button>
+                {storyboard && (
+                  <div className="space-y-4">
+                    {storyboard.map((scene, index) => (
+                      <div key={index} className="flex items-start space-x-4">
+                        <img
+                          src={scene.image || '/placeholder.svg'}
+                          alt={`Scene ${index + 1}`}
+                          className="w-48 h-36 object-cover"
+                        />
+                        <Textarea
+                          value={scene.description}
+                          readOnly
+                          className="flex-1 h-36"
+                        />
+                        <Button
+                          onClick={() => regenerateImage(scene, index)}
+                          disabled={regeneratingImage[index]}
+                        >
+                          {regeneratingImage[index] ? 'Regenerating...' : 'Regenerate Image'}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+              <TabsContent value="settings">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block mb-2 text-gray-900 dark:text-gray-300">Style</label>
+                    <Input type="text" placeholder="e.g., Cartoon, Realistic, Anime" />
+                  </div>
+                  <div>
+                    <label className="block mb-2 text-gray-900 dark:text-gray-300">Number of Scenes</label>
+                    <Input type="number" defaultValue={3} min={1} max={10} />
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }
