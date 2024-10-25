@@ -11,8 +11,8 @@ import { BookOpen, Home, FolderOpen, Trash2, Library, Users, Mic2 } from 'lucide
 export default function Page() {
   const [script, setScript] = useState('');
   const [loading, setLoading] = useState(false);
-  const [storyboard, setStoryboard] = useState(null);
-  const [regeneratingImage, setRegeneratingImage] = useState({}); // Track which image is regenerating
+  const [storyboard, setStoryboard] = useState<Array<{ image: string; description: string; visuals: string }> | null>(null); // Update the type here
+  const [regeneratingImage, setRegeneratingImage] = useState<Record<number, boolean>>({}); // Specify the type here
 
   const generateStoryboard = async () => {
     if (!script.trim()) {
@@ -38,15 +38,20 @@ export default function Page() {
 
       const data = await response.json();
       setStoryboard(data.storyboard);
-    } catch (error) {
-      console.error(error);
-      alert(error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error(error);
+        alert(error.message);
+      } else {
+        console.error('An unknown error occurred');
+        alert('An unknown error occurred');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const regenerateImage = async (scene, index) => {
+  const regenerateImage = async (scene: { description: string, visuals: string }, index: number) => {
     setRegeneratingImage({ ...regeneratingImage, [index]: true });
 
     try {
@@ -69,13 +74,19 @@ export default function Page() {
 
       const data = await response.json();
       setStoryboard(prevStoryboard => {
+        if (prevStoryboard === null) return []; // Change return value to an empty array
         const updatedStoryboard = [...prevStoryboard];
         updatedStoryboard[index].image = data.image;
         return updatedStoryboard;
       });
     } catch (error) {
-      console.error(error);
-      alert(error.message);
+      if (error instanceof Error) {
+        console.error(error);
+        alert(error.message);
+      } else {
+        console.error('An unknown error occurred');
+        alert('An unknown error occurred');
+      }
     } finally {
       setRegeneratingImage({ ...regeneratingImage, [index]: false });
     }
@@ -160,7 +171,7 @@ export default function Page() {
                 >
                   {loading ? 'Generating Storyboard...' : 'Generate Storyboard'}
                 </Button>
-                {storyboard && (
+                {storyboard && storyboard !== null && (
                   <div className="space-y-4">
                     {storyboard.map((scene, index) => (
                       <div key={index} className="flex items-start space-x-4">
@@ -175,7 +186,7 @@ export default function Page() {
                           className="flex-1 h-36"
                         />
                         <Button
-                          onClick={() => regenerateImage(scene, index)}
+                          onClick={() => regenerateImage({ description: scene.description, visuals: scene.visuals }, index)} // Pass visuals here
                           disabled={regeneratingImage[index]}
                         >
                           {regeneratingImage[index] ? 'Regenerating...' : 'Regenerate Image'}

@@ -91,7 +91,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid JSON response from AIML API' }, { status: 500 });
     }
   } catch (error) {
-    console.error('Error generating image:', error);
-    return NextResponse.json({ error: 'Error generating image', details: error.message }, { status: 500 });
+    console.error('Error generating image:', error as any); // Type assertion to 'any'
+    return NextResponse.json({ error: 'Error generating image', details: (error as any).message }, { status: 500 });
   }
 }

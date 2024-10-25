@@ -45,7 +45,13 @@ Instructions:
       ],
     });
 
-    let completionText = completion.choices[0].message.content.trim();
+    // Ensure choices and the first choice are not null
+    if (!completion.choices || !completion.choices[0] || !completion.choices[0].message) {
+      throw new Error('No valid choices returned from OpenAI API');
+    }
+    
+    // Safely access content with a null check
+    let completionText = completion.choices[0].message?.content?.trim() || ''; // Use optional chaining and provide a default value
 
     // Log the assistant's response for debugging purposes
     console.log('Assistant response:', completionText);
@@ -123,7 +129,7 @@ Instructions:
   } catch (error) {
     console.error('Error generating storyboard:', error);
     return NextResponse.json(
-      { error: 'Error generating storyboard', details: error.message },
+      { error: 'Error generating storyboard', details: (error as Error).message }, // Type assertion added
       { status: 500 }
     );
   }
