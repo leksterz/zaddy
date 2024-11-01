@@ -11,8 +11,9 @@ import { BookOpen, Home, FolderOpen, Trash2, Library, Users, Mic2 } from 'lucide
 export default function Page() {
   const [script, setScript] = useState('');
   const [loading, setLoading] = useState(false);
-  const [storyboard, setStoryboard] = useState<Array<{ image: string; description: string; visuals: string }> | null>(null); // Update the type here
-  const [regeneratingImage, setRegeneratingImage] = useState<Record<number, boolean>>({}); // Specify the type here
+  const [storyboard, setStoryboard] = useState<Array<{ image: string; description: string; visuals: string }> | null>(null);
+  const [regeneratingImage, setRegeneratingImage] = useState<Record<number, boolean>>({});
+  const [ebookLink, setEbookLink] = useState<string | null>(null);
 
   const generateStoryboard = async () => {
     if (!script.trim()) {
@@ -74,14 +75,14 @@ export default function Page() {
 
       const data = await response.json();
       setStoryboard(prevStoryboard => {
-        if (prevStoryboard === null) return []; // Change return value to an empty array
+        if (prevStoryboard === null) return [];
         const updatedStoryboard = [...prevStoryboard];
         updatedStoryboard[index].image = data.image;
         return updatedStoryboard;
       });
     } catch (error) {
       if (error instanceof Error) {
-        console.error(error);
+        console.error(error.message);
         alert(error.message);
       } else {
         console.error('An unknown error occurred');
@@ -89,6 +90,38 @@ export default function Page() {
       }
     } finally {
       setRegeneratingImage({ ...regeneratingImage, [index]: false });
+    }
+  };
+
+  const generateEbook = async () => {
+    if (!storyboard) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch('/api/generate-ebook', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: 'My Storybook',
+          author: 'Author Name',
+          content: storyboard,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate eBook');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      setEbookLink(url);
+    } catch (error) {
+      console.error('Error generating eBook:', error);
+      alert('Failed to generate eBook');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -186,7 +219,7 @@ export default function Page() {
                           className="flex-1 h-36"
                         />
                         <Button
-                          onClick={() => regenerateImage({ description: scene.description, visuals: scene.visuals }, index)} // Pass visuals here
+                          onClick={() => regenerateImage({ description: scene.description, visuals: scene.visuals }, index)}
                           disabled={regeneratingImage[index]}
                         >
                           {regeneratingImage[index] ? 'Regenerating...' : 'Regenerate Image'}
@@ -194,6 +227,15 @@ export default function Page() {
                       </div>
                     ))}
                   </div>
+                )}
+                {/* eBook generation */}
+                <Button onClick={generateEbook} disabled={loading || !storyboard}>
+                  {loading ? 'Generating eBook...' : 'Download eBook'}
+                </Button>
+                {ebookLink && (
+                  <a href={ebookLink} download="storybook.epub" className="block mt-4 text-blue-500">
+                    Download your eBook
+                  </a>
                 )}
               </TabsContent>
               <TabsContent value="settings">

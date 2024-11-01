@@ -14,6 +14,14 @@ const nextConfig = {
       },
     ],
   },
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      // Exclude `ejs` from being bundled on the client side by Webpack
+      config.externals.push('ejs');
+    }
+
+    return config;
+  },
 };
 
 export default nextConfig;
